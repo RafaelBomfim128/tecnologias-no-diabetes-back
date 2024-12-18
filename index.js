@@ -64,6 +64,7 @@ app.use((err, req, res, next) => {
 });
 
 // Rotas
+app.get('/', counterController.healthCheck)
 app.get('/healthcheck', counterController.healthCheck)
 app.get('/api/count', counterController.getCount);
 app.post('/api/increment', counterController.incrementCount);
