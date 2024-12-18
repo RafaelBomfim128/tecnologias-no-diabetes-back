@@ -48,8 +48,20 @@ app.use(cors({
         return callback(new Error('Not allowed by CORS'));
     },
     methods: ['GET', 'POST'], // Métodos permitidos
-    allowedHeaders: ['Content-Type', 'x-api-key'] // Cabeçalhos permitidos
+    allowedHeaders: ['Content-Type', 'x-api-key'], // Cabeçalhos permitidos
+    skip: (req) => req.method === 'OPTIONS' // Ignorar requisições OPTIONS
 }));
+
+//Gerenciar o Limite de Requisições Separadas para CORS Preflight
+const limiterOptions = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minuto
+    max: 5, // Máximo de 5 requisições OPTIONS por IP
+    message: "Too many preflight requests in a short time."
+});
+
+app.options('*', limiterOptions); // Apenas OPTIONS com limite separado
+
+app.options('*', cors()); // Responder ao preflight com CORS permitido
 
 app.use((err, req, res, next) => {
     console.error(err.stack); // Loga o erro completo no servidor para depuração
