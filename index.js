@@ -49,18 +49,17 @@ const incrementLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minuto
     max: 1, // 1 requisição por IP
     message: 'Too many increments in a short time.',
-    skip: (req) => req.method === 'OPTIONS',
     handler: (req, res) => {
         res.status(429).json({ error: 'Too many increments in a short time.' });
     },
 });
-app.use('/api/increment', incrementLimiter);
 
 // Rotas
+app.options('/api/increment', corsMiddleware); // Middleware de CORS para preflight específico
 app.get('/', counterController.healthCheck);
 app.get('/healthcheck', counterController.healthCheck);
 app.get('/api/count', counterController.getCount);
-app.post('/api/increment', counterController.incrementCount);
+app.post('/api/increment', incrementLimiter, counterController.incrementCount); // Aplica rate limit aqui
 
 // Tratamento de erros
 app.use((err, req, res, next) => {
