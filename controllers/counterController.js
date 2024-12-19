@@ -19,6 +19,8 @@ exports.incrementCount = async (req, res) => {
     try {
         if (!verifyApiKeyiddleware(req)) {
             console.error('Invalid API Key');
+            console.log(process.env.SECRET_API_KEY)
+            console.log(req.headers["x-api-key"])
             return res.status(403).json({ error: 'Access denied' })
         }
         if (!verifyRefererMiddleware(req)) {
