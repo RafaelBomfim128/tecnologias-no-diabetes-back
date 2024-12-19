@@ -30,26 +30,26 @@ app.use('/api/increment', limiterIncrement);
 
 // Configuração do CORS dinâmico
 const allowedOrigins = [
-    'https://diabetesdm1.netlify.app', // Domínio principal
-    /https:\/\/.*--diabetesdm1\.netlify\.app/ // Expressão regular para URLs temporárias do Netlify
+    'https://diabetesdm1.netlify.app',
+    /https:\/\/.*--diabetesdm1\.netlify\.app/, // Expressão regular para URLs temporárias do Netlify
+    /https:\/\/.*--diabetes-sites-redirect-back.*\.code\.run/ // Expressão regular para suas URLs do Northflank
 ];
 
 app.use(cors({
     origin: (origin, callback) => {
-        // Não permite a requisição se não tiver origem (ex.: em ferramentas como Postman)
+        console.log('Origin:', origin); // Adiciona um log para verificar a origem
+
         if (!origin) return callback(null, true);
 
-        // Verifica se a origem está na lista permitida ou corresponde ao regex
         if (allowedOrigins.some(o => (typeof o === 'string' && o === origin) || (o instanceof RegExp && o.test(origin)))) {
             return callback(null, true);
         }
 
-        // Se a origem não for permitida, bloqueia a requisição
+        console.error('Blocked Origin:', origin); // Loga origens bloqueadas
         return callback(new Error('Not allowed by CORS'));
     },
-    methods: ['GET', 'POST'], // Métodos permitidos
-    allowedHeaders: ['Content-Type', 'x-api-key'], // Cabeçalhos permitidos
-    skip: (req) => req.method === 'OPTIONS' // Ignorar requisições OPTIONS
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'x-api-key'],
 }));
 
 //Gerenciar o Limite de Requisições Separadas para CORS Preflight
