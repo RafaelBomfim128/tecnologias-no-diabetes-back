@@ -21,7 +21,7 @@ const limiterAll = rateLimit({
 
 const limiterIncrement = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minuto
-    max: 1, // Máximo de 1 requisição por IP
+    max: 10, // Máximo de 1 requisição por IP
     message: "Too many views in a short time."
 });
 
