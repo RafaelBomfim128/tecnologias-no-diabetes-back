@@ -21,7 +21,7 @@ const limiterAll = rateLimit({
 
 const limiterIncrement = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minuto
-    max: 10, // Máximo de 1 requisição por IP
+    max: 3, // Máximo de 1 requisição por IP
     message: "Too many views in a short time."
 });
 
@@ -37,19 +37,20 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-    origin: (origin, callback) => {
-        console.log('Origin:', origin);
+    // origin: (origin, callback) => {
+    //     console.log('Origin:', origin);
 
-        if (!origin) return callback(null, true); // Permite requisições sem origem (Postman, etc.)
+    //     if (!origin) return callback(null, true); // Permite requisições sem origem (Postman, etc.)
 
-        if (allowedOrigins.some(o => (typeof o === 'string' && o === origin) || (o instanceof RegExp && o.test(origin)))) {
-            console.log('CORS Allowed for:', origin);
-            return callback(null, true);
-        }
+    //     if (allowedOrigins.some(o => (typeof o === 'string' && o === origin) || (o instanceof RegExp && o.test(origin)))) {
+    //         console.log('CORS Allowed for:', origin);
+    //         return callback(null, true);
+    //     }
 
-        console.error('CORS Blocked for:', origin);
-        return callback(new Error('Not allowed by CORS'));
-    },
+    //     console.error('CORS Blocked for:', origin);
+    //     return callback(new Error('Not allowed by CORS'));
+    // },
+    origin: '*',
     methods: ['GET', 'POST'], // Métodos permitidos
     allowedHeaders: ['Content-Type', 'x-api-key'], // Cabeçalhos permitidos
     optionsSuccessStatus: 200 // Ajusta o status de resposta do preflight para compatibilidade
