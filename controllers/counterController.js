@@ -17,10 +17,11 @@ exports.getCount = async (req, res) => {
 
 exports.incrementCount = async (req, res) => {
     try {
-        if (!verifyApiKeyiddleware(req) || !verifyRefererMiddleware(req) || !validateUserAgentMiddleWare(req)) {
+        if (!verifyApiKeyMiddleware(req) || !verifyRefererMiddleware(req) || !validateUserAgentMiddleWare(req)) {
             return res.status(403).json({ error: 'Access denied' })
         }
         const response = await axios.get(`${BASE_URL}/hit/${process.env.ABACUS_NAMESPACE_KEY}`);
+        console.log('Counter incremented:', response.data.value);
         res.json({ message: 'Counter incremented successfully', counter: response.data.value });
     } catch (error) {
         console.error('Error incrementing count:', error.message);
@@ -31,21 +32,30 @@ exports.incrementCount = async (req, res) => {
 };
 
 //Validação da API Key
-function verifyApiKeyiddleware(req) {
-    const apiKey = req.headers["x-api-key"]
-    return apiKey && apiKey === process.env.SECRET_API_KEY
+function verifyApiKeyMiddleware(req) {
+    const apiKey = req.headers["x-api-key"];
+    const normalizedApiKey = apiKey?.replace(/^"|"$/g, '');
+
+    if (!normalizedApiKey || normalizedApiKey !== process.env.SECRET_API_KEY) {
+        console.error('Invalid API Key:', apiKey);
+        return false;
+    }
+    return true;
 }
+
 
 //Validação do Referer/Origin
 function verifyRefererMiddleware (req) {
     const referer = req.headers.referer || req.headers.origin;
 
     if (!referer) {
+        console.error('Referer/Origin not found');
         return false
     }
 
     const allowedRefererRegex = /https:\/\/.*diabetesdm1\.netlify\.app/;
     if (!allowedRefererRegex.test(referer)) {
+        console.error('Invalid Referer/Origin:', referer);
         return false
     }
 
@@ -64,11 +74,13 @@ function validateUserAgentMiddleWare(req) {
     const userAgent = req.headers['user-agent'];
 
     if (!userAgent) {
+        console.error('User-Agent not found');
         return false
     }
 
     // Verifica se o User-Agent corresponde a algum bloqueado
     if (blockedUserAgents.some(pattern => pattern.test(userAgent))) {
+        console.error('Blocked User-Agent:', userAgent);
         return false
     }
 

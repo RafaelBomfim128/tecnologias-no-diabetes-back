@@ -41,6 +41,10 @@ const globalLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minuto
     max: 100, // 100 requisições por IP
     message: 'Too many requests, please try again later.',
+    handler: (req, res) => {
+        console.error('Rate limit exceeded:', req.ip);
+        res.status(429).json({ error: 'Too many requests, please try again later.' });
+    },
 });
 app.use(globalLimiter);
 
@@ -50,24 +54,27 @@ const incrementLimiter = rateLimit({
     max: 1, // 1 requisição por IP
     message: 'Too many increments in a short time.',
     handler: (req, res) => {
+        console.error('Rate limit exceeded for /api/increment:', req.ip);
         res.status(429).json({ error: 'Too many increments in a short time.' });
     },
 });
-app.use('/api/increment', incrementLimiter);
 
 // Rotas
+app.options('/api/increment', corsMiddleware); // Middleware de CORS para preflight específico
 app.get('/', counterController.healthCheck);
 app.get('/healthcheck', counterController.healthCheck);
 app.get('/api/count', counterController.getCount);
-app.post('/api/increment', counterController.incrementCount);
+app.post('/api/increment', incrementLimiter, counterController.incrementCount); // Aplica rate limit aqui
 
 // Tratamento de erros
 app.use((err, req, res, next) => {
     console.error(err.stack);
     if (err instanceof Error && err.message === 'Not allowed by CORS') {
+        console.error('Access denied by CORS policy:', req.headers.origin);
         return res.status(403).json({ error: 'Access denied by CORS policy' });
     }
-    res.status(500).json({ error: 'An unexpected error occurred' });
+    console.error('An general unexpected error occurred:', err.message);
+    res.status(500).json({ error: 'An general unexpected error occurred' });
 });
 
 // Inicializa o servidor
