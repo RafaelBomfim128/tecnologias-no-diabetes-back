@@ -17,18 +17,7 @@ exports.getCount = async (req, res) => {
 
 exports.incrementCount = async (req, res) => {
     try {
-        if (!verifyApiKeyiddleware(req)) {
-            console.error('Invalid API Key');
-            console.log(process.env.SECRET_API_KEY)
-            console.log(req.headers["x-api-key"])
-            return res.status(403).json({ error: 'Access denied' })
-        }
-        if (!verifyRefererMiddleware(req)) {
-            console.error('Invalid Referer/Origin:', req.headers.referer || req.headers.origin);
-            return res.status(403).json({ error: 'Access denied' })
-        }
-        if (!validateUserAgentMiddleWare(req)) {
-            console.error('Invalid User-Agent:', req.headers['user-agent']);
+        if (!verifyApiKeyMiddleware(req) || !verifyRefererMiddleware(req) || !validateUserAgentMiddleWare(req)) {
             return res.status(403).json({ error: 'Access denied' })
         }
         const response = await axios.get(`${BASE_URL}/hit/${process.env.ABACUS_NAMESPACE_KEY}`);
@@ -43,21 +32,30 @@ exports.incrementCount = async (req, res) => {
 };
 
 //Validação da API Key
-function verifyApiKeyiddleware(req) {
-    const apiKey = req.headers["x-api-key"]
-    return apiKey && apiKey?.replace(/^"|"$/g, '') == process.env.SECRET_API_KEY
+function verifyApiKeyMiddleware(req) {
+    const apiKey = req.headers["x-api-key"];
+    const normalizedApiKey = apiKey?.replace(/^"|"$/g, '');
+
+    if (!normalizedApiKey || normalizedApiKey !== process.env.SECRET_API_KEY) {
+        console.error('Invalid API Key:', apiKey);
+        return false;
+    }
+    return true;
 }
+
 
 //Validação do Referer/Origin
 function verifyRefererMiddleware (req) {
     const referer = req.headers.referer || req.headers.origin;
 
     if (!referer) {
+        console.error('Referer/Origin not found');
         return false
     }
 
     const allowedRefererRegex = /https:\/\/.*diabetesdm1\.netlify\.app/;
     if (!allowedRefererRegex.test(referer)) {
+        console.error('Invalid Referer/Origin:', referer);
         return false
     }
 
@@ -76,11 +74,13 @@ function validateUserAgentMiddleWare(req) {
     const userAgent = req.headers['user-agent'];
 
     if (!userAgent) {
+        console.error('User-Agent not found');
         return false
     }
 
     // Verifica se o User-Agent corresponde a algum bloqueado
     if (blockedUserAgents.some(pattern => pattern.test(userAgent))) {
+        console.error('Blocked User-Agent:', userAgent);
         return false
     }
 
