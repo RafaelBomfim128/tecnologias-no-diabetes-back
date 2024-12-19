@@ -17,10 +17,20 @@ exports.getCount = async (req, res) => {
 
 exports.incrementCount = async (req, res) => {
     try {
-        if (!verifyApiKeyiddleware(req) || !verifyRefererMiddleware(req) || !validateUserAgentMiddleWare(req)) {
+        if (!verifyApiKeyiddleware(req)) {
+            console.error('Invalid API Key');
+            return res.status(403).json({ error: 'Access denied' })
+        }
+        if (!verifyRefererMiddleware(req)) {
+            console.error('Invalid Referer/Origin:', req.headers.referer || req.headers.origin);
+            return res.status(403).json({ error: 'Access denied' })
+        }
+        if (!validateUserAgentMiddleWare(req)) {
+            console.error('Invalid User-Agent:', req.headers['user-agent']);
             return res.status(403).json({ error: 'Access denied' })
         }
         const response = await axios.get(`${BASE_URL}/hit/${process.env.ABACUS_NAMESPACE_KEY}`);
+        console.log('Counter incremented:', response.data.value);
         res.json({ message: 'Counter incremented successfully', counter: response.data.value });
     } catch (error) {
         console.error('Error incrementing count:', error.message);
