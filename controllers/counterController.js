@@ -45,7 +45,7 @@ exports.incrementCount = async (req, res) => {
 //Validação da API Key
 function verifyApiKeyiddleware(req) {
     const apiKey = req.headers["x-api-key"]
-    return apiKey && apiKey == process.env.SECRET_API_KEY
+    return apiKey && apiKey?.replace(/^"|"$/g, '') == process.env.SECRET_API_KEY
 }
 
 //Validação do Referer/Origin
