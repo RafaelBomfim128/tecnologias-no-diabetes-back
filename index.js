@@ -41,10 +41,6 @@ const globalLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minuto
     max: 100, // 100 requisições por IP
     message: 'Too many requests, please try again later.',
-    skip: (req) => req.method === 'OPTIONS',
-    handler: (req, res) => {
-        res.status(429).json({ error: 'Too many increments in a short time.' });
-    },
 });
 app.use(globalLimiter);
 
@@ -53,6 +49,7 @@ const incrementLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minuto
     max: 1, // 1 requisição por IP
     message: 'Too many increments in a short time.',
+    skip: (req) => req.method === 'OPTIONS',
     handler: (req, res) => {
         res.status(429).json({ error: 'Too many increments in a short time.' });
     },
