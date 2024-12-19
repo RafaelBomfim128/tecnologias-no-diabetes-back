@@ -13,29 +13,11 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.set('trust proxy', 1); // Confia no proxy reverso
 
-const limiterAll = rateLimit({
-    windowMs:  500, // 0,5 segundos
-    max: 3, // Máximo de 3 requisições por IP
-    message: "Too many requests, try again later."
-});
-
-const limiterIncrement = rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minuto
-    max: 3, // Máximo de 1 requisição por IP
-    message: "Too many views in a short time."
-});
-
-app.use(limiterAll);
-
-app.use('/api/increment', limiterIncrement);
-
 // Configuração do CORS dinâmico
 const allowedOrigins = [
     'https://diabetesdm1.netlify.app',
     /https:\/\/.*--diabetesdm1\.netlify\.app/, // Expressão regular para URLs temporárias do Netlify
-    /https:\/\/.*--diabetes-sites-redirect-back.*\.code\.run/ // Expressão regular para suas URLs do Northflank
 ];
-
 app.use(cors({
     // origin: (origin, callback) => {
     //     console.log('Origin:', origin);
@@ -56,6 +38,25 @@ app.use(cors({
     optionsSuccessStatus: 200 // Ajusta o status de resposta do preflight para compatibilidade
 }));
 
+const limiterAll = rateLimit({
+    windowMs:  500, // 0,5 segundos
+    max: 3, // Máximo de 3 requisições por IP
+    message: 'Too many views in a short time.'
+});
+
+const limiterIncrement = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minuto
+    max: 3, // Máximo de 3 requisições por IP
+    message: 'Too many views in a short time.',
+    handler: (req, res) => {
+        // Garante que o cabeçalho CORS seja enviado na resposta
+        res.set('Access-Control-Allow-Origin', '*'); // ou especifique sua origem permitida
+        res.set('Access-Control-Allow-Methods', 'GET, POST');
+        res.set('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
+        res.status(429).send('Too many views in a short time.');
+    }
+});
+
 //Gerenciar o Limite de Requisições Separadas para CORS Preflight
 const limiterOptions = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minuto
@@ -63,8 +64,9 @@ const limiterOptions = rateLimit({
     message: "Too many preflight requests in a short time."
 });
 
+app.use(limiterAll);
+app.use('/api/increment', limiterIncrement);
 app.options('*', limiterOptions); // Apenas OPTIONS com limite separado
-
 app.options('*', cors()); // Responder ao preflight com CORS permitido
 
 app.use((err, req, res, next) => {
