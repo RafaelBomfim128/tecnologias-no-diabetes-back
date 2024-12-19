@@ -19,20 +19,19 @@ const allowedOrigins = [
     /https:\/\/.*--diabetesdm1\.netlify\.app/, // Expressão regular para URLs temporárias do Netlify
 ];
 app.use(cors({
-    // origin: (origin, callback) => {
-    //     console.log('Origin:', origin);
+    origin: (origin, callback) => {
+        console.log('Origin:', origin);
 
-    //     if (!origin) return callback(null, true); // Permite requisições sem origem (Postman, etc.)
+        if (!origin) return callback(new Error('Not allowed by CORS')); // Permite requisições sem origem (Postman, etc.)
 
-    //     if (allowedOrigins.some(o => (typeof o === 'string' && o === origin) || (o instanceof RegExp && o.test(origin)))) {
-    //         console.log('CORS Allowed for:', origin);
-    //         return callback(null, true);
-    //     }
+        if (!allowedOrigins.some(o => (typeof o === 'string' && o === origin) || (o instanceof RegExp && o.test(origin)))) {
+            console.error('CORS Blocked for:', origin);
+            return callback(new Error('Not allowed by CORS'));
+        }
 
-    //     console.error('CORS Blocked for:', origin);
-    //     return callback(new Error('Not allowed by CORS'));
-    // },
-    origin: '*',
+        console.log('CORS Allowed for:', origin);
+        return callback(null, true);
+    },
     methods: ['GET', 'POST'], // Métodos permitidos
     allowedHeaders: ['Content-Type', 'x-api-key'], // Cabeçalhos permitidos
     optionsSuccessStatus: 200 // Ajusta o status de resposta do preflight para compatibilidade
