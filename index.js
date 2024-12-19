@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware para JSON
 app.use(express.json());
+app.set('trust proxy', 1); // Confia no proxy reverso
 
 const limiterAll = rateLimit({
     windowMs:  500, // 0,5 segundos
@@ -37,19 +38,21 @@ const allowedOrigins = [
 
 app.use(cors({
     origin: (origin, callback) => {
-        console.log('Origin:', origin); // Adiciona um log para verificar a origem
+        console.log('Origin:', origin);
 
-        if (!origin) return callback(null, true);
+        if (!origin) return callback(null, true); // Permite requisições sem origem (Postman, etc.)
 
         if (allowedOrigins.some(o => (typeof o === 'string' && o === origin) || (o instanceof RegExp && o.test(origin)))) {
+            console.log('CORS Allowed for:', origin);
             return callback(null, true);
         }
 
-        console.error('Blocked Origin:', origin); // Loga origens bloqueadas
+        console.error('CORS Blocked for:', origin);
         return callback(new Error('Not allowed by CORS'));
     },
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'x-api-key'],
+    methods: ['GET', 'POST'], // Métodos permitidos
+    allowedHeaders: ['Content-Type', 'x-api-key'], // Cabeçalhos permitidos
+    optionsSuccessStatus: 200 // Ajusta o status de resposta do preflight para compatibilidade
 }));
 
 //Gerenciar o Limite de Requisições Separadas para CORS Preflight
