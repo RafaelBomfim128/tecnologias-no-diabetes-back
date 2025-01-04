@@ -15,7 +15,9 @@ app.set('trust proxy', 1); // Confia no proxy reverso
 // Origens permitidas
 const allowedOrigins = [
     'https://diabetesdm1.netlify.app',
+    'https://tecnologiasnodiabetes.com.br',
     /https:\/\/.*--diabetesdm1\.netlify\.app/, // Expressão regular para URLs temporárias do Netlify
+    /https:\/\/.*--tecnologiasnodiabetes\.com\.br/, // Expressão regular para URLs temporárias do Netlify
 ];
 
 // Middleware de CORS
