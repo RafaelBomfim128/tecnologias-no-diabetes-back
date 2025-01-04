@@ -63,8 +63,8 @@ app.use(globalLimiter);
 
 // Rate Limiting para increment
 const incrementLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minuto
-    max: 100, // 1 requisição por IP
+    windowMs: 120 * 1000, // 2 minutos
+    max: 1, // 1 requisição por IP
     message: 'Too many increments in a short time.',
     handler: (req, res) => {
         console.error('Rate limit excedido para a API de incremento:', req.ip);
