@@ -77,9 +77,11 @@ function verifyRefererMiddleware(req) {
         return false
     }
 
-    const allowedRefererRegex = /https:\/\/.*diabetesdm1\.netlify\.app/;
-    const allowedRefererRegex2 = /https:\/\/.*tecnologiasnodiabetes\.com\.br/;
-    if (!allowedRefererRegex.test(referer) || !allowedRefererRegex2) {
+    const allowedRefererRegexes = [
+        /https:\/\/.*diabetesdm1\.netlify\.app/,
+        /https:\/\/.*tecnologiasnodiabetes\.com\.br/
+    ];
+    if (!allowedRefererRegexes.some(regex => regex.test(referer))) {
         console.error('Referer/Origin inválido:', referer);
         return false
     }

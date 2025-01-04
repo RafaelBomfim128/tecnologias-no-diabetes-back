@@ -23,7 +23,18 @@ const allowedOrigins = [
 // Middleware de CORS
 const corsMiddleware = cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.some(o => (typeof o === 'string' && o === origin) || (o instanceof RegExp && o.test(origin)))) {
+        if (
+            origin && allowedOrigins.some(o => {
+                //Tratamento de barra final
+                const normalizedOrigin = origin.replace(/\/$/, '');
+                if (typeof o === 'string') {
+                    return normalizedOrigin === o.replace(/\/$/, ''); //
+                } else if (o instanceof RegExp) {
+                    return o.test(normalizedOrigin);
+                }
+                return false;
+            })
+        ) {
             callback(null, true); // Permitir acesso
         } else {
             console.error('CORS bloqueado para:', origin);
@@ -53,7 +64,7 @@ app.use(globalLimiter);
 // Rate Limiting para increment
 const incrementLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minuto
-    max: 1, // 1 requisição por IP
+    max: 100, // 1 requisição por IP
     message: 'Too many increments in a short time.',
     handler: (req, res) => {
         console.error('Rate limit excedido para a API de incremento:', req.ip);
