@@ -1,5 +1,3 @@
-const axios = require('axios');
-const BASE_URL = 'https://abacus.jasoncameron.dev';
 const queries = require('../queries');
 
 exports.healthCheck = async (req, res) => {
@@ -80,7 +78,8 @@ function verifyRefererMiddleware(req) {
     }
 
     const allowedRefererRegex = /https:\/\/.*diabetesdm1\.netlify\.app/;
-    if (!allowedRefererRegex.test(referer)) {
+    const allowedRefererRegex2 = /https:\/\/.*tecnologiasnodiabetes\.com\.br/;
+    if (!allowedRefererRegex.test(referer) || !allowedRefererRegex2) {
         console.error('Referer/Origin inválido:', referer);
         return false
     }
