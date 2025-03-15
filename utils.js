@@ -50,7 +50,7 @@ function verifyRefererMiddleware(req) {
     }
 
     const allowedRefererRegexes = [
-        /^https:\/\/(?:[a-zA-Z0-9-]+--)?diabetesdm1\.netlify\.app$/,
+        /^https:\/\/(?:.+--)?diabetesdm1\.netlify\.app(\/.*)?$/,
         /^https:\/\/(?:.*\.)?tecnologiasnodiabetes\.com\.br$/
     ];
     
