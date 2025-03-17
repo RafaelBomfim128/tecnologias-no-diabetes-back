@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const viewsController = require('./controllers/viewsController');
+const quizController = require('./controllers/quizController');
 
 dotenv.config();
 const app = express();
@@ -14,11 +15,13 @@ app.set('trust proxy', 1); // Confia no proxy reverso
 
 // Origens permitidas
 const allowedOrigins = [
-    'https://diabetesdm1.netlify.app',
-    'https://tecnologiasnodiabetes.com.br',
-    /https:\/\/.*--diabetesdm1\.netlify\.app/, // Expressão regular para URLs temporárias do Netlify
-    /https:\/\/.*--tecnologiasnodiabetes\.com\.br/, // Expressão regular para URLs temporárias do Netlify
+    /^https:\/\/(?:[a-zA-Z0-9-]+--)?diabetesdm1\.netlify\.app$/,
+    /^https:\/\/(?:.*\.)?tecnologiasnodiabetes\.com\.br$/
 ];
+
+if (process.env.NODE_ENV === 'development') {
+    allowedOrigins.push(/^http:\/\/localhost(:\d+)?(\/.*)?$/, /^http:\/\/127\.0\.0\.1(:\d+)?(\/.*)?$/);
+}
 
 // Middleware de CORS
 const corsMiddleware = cors({
@@ -46,8 +49,18 @@ const corsMiddleware = cors({
     optionsSuccessStatus: 200,
 });
 
-// Aplicando CORS globalmente
-app.use(corsMiddleware);
+if (process.env.NODE_ENV === 'development') {
+    app.use(
+        cors({
+            origin: "*",
+            methods: "GET,POST,PUT,DELETE",
+            allowedHeaders: "Content-Type, x-api-key",
+        })
+    );
+} else {
+    app.use(corsMiddleware);
+    app.options('/api/incrementViews', corsMiddleware);
+}
 
 // Rate Limiting global
 const globalLimiter = rateLimit({
@@ -72,10 +85,6 @@ const incrementLimiter = rateLimit({
     },
 });
 
-// Rotas
-// Middleware de CORS para preflight
-app.options('/api/incrementViews', corsMiddleware);
-
 app.get('/', viewsController.healthCheck);
 app.get('/healthcheck', viewsController.healthCheck);
 
@@ -84,6 +93,13 @@ app.get('/api/monthlyViews', viewsController.getResetMonthlyViews);
 app.get('/api/totalViews', viewsController.getTotalViews);
 
 app.post('/api/incrementViews', incrementLimiter, viewsController.incrementViews);
+
+
+//Quiz
+app.post('/api/quiz/start-quiz', quizController.startQuiz);
+app.get('/api/quiz/view-sessions', quizController.viewSessionsQuiz);
+app.post('/api/quiz/submit', quizController.submitQuizScore);
+app.get('/api/quiz/ranking', quizController.getQuizRanking);
 
 // Tratamento de erros
 app.use((err, req, res, next) => {
