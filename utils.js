@@ -46,12 +46,12 @@ function verifyRefererMiddleware(req) {
 
     if (!referer) {
         console.error('Referer/Origin não encontrado');
-        return false
+        return false;
     }
 
     const allowedRefererRegexes = [
         /^https:\/\/(?:.+--)?diabetesdm1\.netlify\.app(\/.*)?$/,
-        /^https:\/\/(?:.*\.)?tecnologiasnodiabetes\.com\.br$/
+        /^https:\/\/(?:.*\.)?tecnologiasnodiabetes\.com\.br(\/.*)?$/
     ];
     
     if (process.env.NODE_ENV === 'development') {
@@ -60,10 +60,10 @@ function verifyRefererMiddleware(req) {
 
     if (!allowedRefererRegexes.some(regex => regex.test(referer))) {
         console.error('Referer/Origin inválido:', referer);
-        return false
+        return false;
     }
 
-    return true
+    return true;
 };
 
 //Validação de user-agent
