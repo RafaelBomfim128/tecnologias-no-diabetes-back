@@ -36,8 +36,6 @@ exports.startQuiz = async (req, res) => {
     if (!utils.verifyAllMiddlewares(req, res)) return;
 
     try {
-        queries.deleteExpiredSessionsQuiz();
-
         const { questions } = req.body;
 
         if (!questions || questions.length !== 10) {
@@ -50,13 +48,8 @@ exports.startQuiz = async (req, res) => {
         const signature = generateHMAC(sessionID, questionSetID);
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
-        const activeSessions = await queries.getActiveSessionsQuiz(ipAddress)
-        if (activeSessions.length >= 5) {
-            const oldestSessionID = activeSessions[0].session_id;
-            queries.deleteSessionQuiz(oldestSessionID);
-        }
-
-        queries.insertSessionQuiz(sessionID, ipAddress, questionSetID, expiresAt);
+        await queries.insertSessionQuiz(sessionID, ipAddress, questionSetID, expiresAt);
+        await queries.getAndDeleteOldSessionsQuiz();
         return res.status(200).json({ sessionID, questionSetID, signature });
     } catch (error) {
         console.error("Erro ao iniciar quiz:", error);
@@ -73,7 +66,7 @@ exports.viewSessionsQuiz = async (req, res) => {
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        const sessions = await queries.getAllNotExpiredSessionsQuiz()
+        const sessions = await queries.getAndDeleteOldSessionsQuiz()
         const sessionsList = sessions.map(({ session_id, ip_address, question_set_id, expires_at }) => ({
             ip: ip_address,
             sessionID: session_id,
@@ -125,8 +118,8 @@ exports.submitQuizScore = async (req, res) => {
             return res.status(400).json({ error: "Dados inválidos" });
         }
 
-        queries.insertRankingQuiz(name, score, correctCount, ipAddress)
-        queries.deleteSessionQuiz(sessionID)
+        await queries.insertRankingQuiz(name, score, correctCount, ipAddress)
+        await queries.deleteSessionQuiz(sessionID)
 
         console.log("Pontuação registrada:", { name, score, correctCount });
 
