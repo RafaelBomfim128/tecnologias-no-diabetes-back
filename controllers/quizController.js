@@ -36,7 +36,7 @@ exports.startQuiz = async (req, res) => {
     if (!utils.verifyAllMiddlewares(req, res)) return;
 
     try {
-        queries.deleteExpiredSessionsQuiz();
+        queries.getAndDeleteOldSessionsQuiz();
 
         const { questions } = req.body;
 
@@ -49,12 +49,6 @@ exports.startQuiz = async (req, res) => {
         const questionSetID = questions.map(q => q.id[0]).join("");
         const signature = generateHMAC(sessionID, questionSetID);
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-
-        const activeSessions = await queries.getActiveSessionsQuiz(ipAddress)
-        if (activeSessions.length >= 5) {
-            const oldestSessionID = activeSessions[0].session_id;
-            queries.deleteSessionQuiz(oldestSessionID);
-        }
 
         queries.insertSessionQuiz(sessionID, ipAddress, questionSetID, expiresAt);
         return res.status(200).json({ sessionID, questionSetID, signature });
@@ -73,7 +67,7 @@ exports.viewSessionsQuiz = async (req, res) => {
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        const sessions = await queries.getAllNotExpiredSessionsQuiz()
+        const sessions = await queries.getAndDeleteOldSessionsQuiz()
         const sessionsList = sessions.map(({ session_id, ip_address, question_set_id, expires_at }) => ({
             ip: ip_address,
             sessionID: session_id,

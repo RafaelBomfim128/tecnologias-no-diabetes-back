@@ -102,16 +102,13 @@ class Queries {
         return session;
     }
 
-    async getAllNotExpiredSessionsQuiz() {
-        const { data: sessions, error } = await supabase
-            .from("quiz_sessions")
-            .select("session_id, ip_address, question_set_id, expires_at")
-            .gte("expires_at", new Date().toISOString());
+    async getAndDeleteOldSessionsQuiz() {
+        const { data, error } = await supabase.rpc('get_and_delete_old_quiz_sessions');
 
         if (error) {
             throw new Error(`Erro ao buscar todas sessões do Quiz": ${error.message}`);
         }
-        return sessions;
+        return data;
     }
 
     async deleteSessionQuiz(sessionID) {
@@ -133,13 +130,6 @@ class Queries {
 
         if (insertError) {
             throw new Error(`Erro ao inserir sessão do Quiz": ${insertError.message}`);
-        }
-    }
-
-    async deleteExpiredSessionsQuiz() {
-        const { error } = await supabase.rpc("delete_expired_quiz_sessions");
-        if (error) {
-            throw new Error("Erro ao limpar sessões expiradas:", error);
         }
     }
 
