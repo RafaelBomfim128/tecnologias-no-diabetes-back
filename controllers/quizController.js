@@ -36,8 +36,6 @@ exports.startQuiz = async (req, res) => {
     if (!utils.verifyAllMiddlewares(req, res)) return;
 
     try {
-        queries.getAndDeleteOldSessionsQuiz();
-
         const { questions } = req.body;
 
         if (!questions || questions.length !== 10) {
@@ -51,6 +49,7 @@ exports.startQuiz = async (req, res) => {
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
         queries.insertSessionQuiz(sessionID, ipAddress, questionSetID, expiresAt);
+        queries.getAndDeleteOldSessionsQuiz();
         return res.status(200).json({ sessionID, questionSetID, signature });
     } catch (error) {
         console.error("Erro ao iniciar quiz:", error);
