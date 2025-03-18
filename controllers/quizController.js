@@ -48,8 +48,8 @@ exports.startQuiz = async (req, res) => {
         const signature = generateHMAC(sessionID, questionSetID);
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
-        queries.insertSessionQuiz(sessionID, ipAddress, questionSetID, expiresAt);
-        queries.getAndDeleteOldSessionsQuiz();
+        await queries.insertSessionQuiz(sessionID, ipAddress, questionSetID, expiresAt);
+        await queries.getAndDeleteOldSessionsQuiz();
         return res.status(200).json({ sessionID, questionSetID, signature });
     } catch (error) {
         console.error("Erro ao iniciar quiz:", error);
@@ -118,8 +118,8 @@ exports.submitQuizScore = async (req, res) => {
             return res.status(400).json({ error: "Dados inválidos" });
         }
 
-        queries.insertRankingQuiz(name, score, correctCount, ipAddress)
-        queries.deleteSessionQuiz(sessionID)
+        await queries.insertRankingQuiz(name, score, correctCount, ipAddress)
+        await queries.deleteSessionQuiz(sessionID)
 
         console.log("Pontuação registrada:", { name, score, correctCount });
 
