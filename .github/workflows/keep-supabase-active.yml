@@ -21,6 +21,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Keep Supabase Active
-        run: |
-          node keep-alive.js
+      - name: Run keep-alive script
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_URL_PROD: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_ANON_KEY_PROD: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
+        run: node keep-alive.js
