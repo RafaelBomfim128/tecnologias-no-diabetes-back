@@ -15,7 +15,8 @@ async function keepSupabaseActive() {
     try {
         const { data, error } = await supabaseDev
             .from('view_counter')
-            .select('id')
+            .select('views')
+            .eq('name', 'Total')
             .limit(1);
 
         if (error) {
@@ -30,9 +31,10 @@ async function keepSupabaseActive() {
 
     try {
         const { data, error } = await supabaseProd
-            .from('view_counter')
-            .select('id')
-            .limit(1);
+        .from('view_counter')
+        .select('views')
+        .eq('name', 'Total')
+        .limit(1);
 
         if (error) {
             throw new Error(`Supabase Prod error: ${error.message}`);
