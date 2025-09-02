@@ -10,6 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run immortality from fork
-        uses: RafaelBomfim128/gh-workflow-immortality
+        uses: RafaelBomfim128/gh-workflow-immortality@main
         with:
           secret: ${{ secrets.PREVENT_WORKFLOW_IDLE_TOKEN }}
