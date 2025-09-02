@@ -13,3 +13,4 @@ jobs:
         uses: RafaelBomfim128/gh-workflow-immortality@main
         with:
           secret: ${{ secrets.PREVENT_WORKFLOW_IDLE_TOKEN }}
+          repos: ${{ github.repository }}
