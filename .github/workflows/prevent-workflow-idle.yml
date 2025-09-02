@@ -1,0 +1,15 @@
+name: Keep workflows alive
+
+on:
+  schedule:
+    - cron: "0 0 1 * *" # executa 1x por mês
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run immortality from fork
+        uses: RafaelBomfim128/gh-workflow-immortality
+        with:
+          secret: ${{ secrets.PREVENT_WORKFLOW_IDLE_TOKEN }}
