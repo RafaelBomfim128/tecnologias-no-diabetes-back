@@ -4,6 +4,7 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const viewsController = require('./controllers/viewsController');
 const quizController = require('./controllers/quizController');
+const proxyController = require('./controllers/proxyController')
 
 dotenv.config();
 const app = express();
@@ -88,18 +89,20 @@ const incrementLimiter = rateLimit({
 app.get('/', viewsController.healthCheck);
 app.get('/healthcheck', viewsController.healthCheck);
 
+//Views
 app.get('/api/dailyViews', viewsController.getResetDailyViews);
 app.get('/api/monthlyViews', viewsController.getResetMonthlyViews);
 app.get('/api/totalViews', viewsController.getTotalViews);
-
 app.post('/api/incrementViews', incrementLimiter, viewsController.incrementViews);
-
 
 //Quiz
 app.post('/api/quiz/start-quiz', quizController.startQuiz);
 app.get('/api/quiz/view-sessions', quizController.viewSessionsQuiz);
 app.post('/api/quiz/submit', quizController.submitQuizScore);
 app.get('/api/quiz/ranking', quizController.getQuizRanking);
+
+//Proxy (bypass para política de CORS, usado principalmente pelo testador de nightscout)
+app.get('/api/proxy', proxyController.getContentHtml);
 
 // Tratamento de erros
 app.use((err, req, res, next) => {
