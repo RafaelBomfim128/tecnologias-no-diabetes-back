@@ -1,5 +1,5 @@
 # Usa uma imagem base do Node.js
-FROM gcr.io/distroless/nodejs20
+FROM node:20.11.1
 
 # Define o diretório de trabalho dentro do container
 WORKDIR /app
