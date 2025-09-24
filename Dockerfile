@@ -1,5 +1,5 @@
 # Usa uma imagem base do Node.js
-FROM northflank/node:20
+FROM gcr.io/distroless/nodejs20
 
 # Define o diretório de trabalho dentro do container
 WORKDIR /app
