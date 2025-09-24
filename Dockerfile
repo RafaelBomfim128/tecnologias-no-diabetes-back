@@ -1,5 +1,5 @@
 # Usa uma imagem base do Node.js
-ROM ghcr.io/nodejs/node:20.11.1
+FROM ghcr.io/nodejs/node:20.11.1
 
 # Define o diretório de trabalho dentro do container
 WORKDIR /app
