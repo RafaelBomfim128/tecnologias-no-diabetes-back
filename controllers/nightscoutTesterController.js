@@ -3,9 +3,8 @@ const utils = require('../utils');
 
 exports.getTotalUses = async (req, res) => {
     try {
-        queries.getTotalUsageNightscoutTester().then(data => {
-            res.status(200).json({ count: queries.getColumnValue(data, 'count') });
-        });
+        const data = await queries.getTotalUsageNightscoutTester();
+        res.status(200).json({ count: queries.getColumnValue(data, 'count') });
     } catch (error) {
         console.error('Erro ao buscar contador de usos do testador de Nightscout:', error.message);
         res.status(500).json({ error: 'Failed to fetch usage counter for Nightscout tester' });
