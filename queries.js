@@ -171,6 +171,19 @@ class Queries {
             }
             return data;
     }
+
+    async getTotalUsageNightscoutTester() {
+        const { data, error } = await supabase
+            .from('nightscout_tester_uses_general')
+            .select('*');
+            if (error) {
+                console.error(`Erro ao buscar contador de usos do testador de Nightscout: ${error.message}`);
+                return null;
+            }
+            return data;
+    }
+
+    async 
 }
 
 module.exports = new Queries();

@@ -5,6 +5,7 @@ const rateLimit = require('express-rate-limit');
 const viewsController = require('./controllers/viewsController');
 const quizController = require('./controllers/quizController');
 const proxyController = require('./controllers/proxyController')
+const nightscoutTesterController = require('./controllers/nightscoutTesterController')
 
 dotenv.config();
 const app = express();
@@ -76,12 +77,22 @@ const globalLimiter = rateLimit({
 app.use(globalLimiter);
 
 // Rate Limiting para increment
-const incrementLimiter = rateLimit({
+const incrementViewCounterLimiter = rateLimit({
     windowMs: 120 * 1000, // 2 minutos
     max: 1, // 1 requisição por IP
     message: 'Too many increments in a short time.',
     handler: (req, res) => {
-        console.error('Rate limit excedido para a API de incremento:', req.ip);
+        console.error('Rate limit excedido para a API de incremento de views:', req.ip);
+        res.status(429).json({ error: 'Too many increments in a short time.' });
+    },
+});
+
+const incrementNightscoutUsesLimiter = rateLimit({
+    windowMs: 10 * 1000, // 10 segundos
+    max: 1, // 1 requisição por IP
+    message: 'Too many increments in a short time.',
+    handler: (req, res) => {
+        console.error('Rate limit excedido para a API de incremento de uso do Nightscout Tester:', req.ip);
         res.status(429).json({ error: 'Too many increments in a short time.' });
     },
 });
@@ -93,7 +104,7 @@ app.get('/healthcheck', viewsController.healthCheck);
 app.get('/api/dailyViews', viewsController.getResetDailyViews);
 app.get('/api/monthlyViews', viewsController.getResetMonthlyViews);
 app.get('/api/totalViews', viewsController.getTotalViews);
-app.post('/api/incrementViews', incrementLimiter, viewsController.incrementViews);
+app.post('/api/incrementViews', incrementViewCounterLimiter, viewsController.incrementViews);
 
 //Quiz
 app.post('/api/quiz/start-quiz', quizController.startQuiz);
@@ -103,6 +114,10 @@ app.get('/api/quiz/ranking', quizController.getQuizRanking);
 
 //Proxy (bypass para política de CORS, usado principalmente pelo testador de nightscout)
 app.get('/api/proxy', proxyController.getContentHtml);
+
+//APIs do testador de Nightscout
+app.get('/api/nightscoutUses', nightscoutTesterController.getTotalUses);
+app.post('/api/incrementNightcoutUses', incrementNightscoutUsesLimiter, nightscoutTesterController.incrementCounterUses);
 
 // Tratamento de erros
 app.use((err, req, res, next) => {
