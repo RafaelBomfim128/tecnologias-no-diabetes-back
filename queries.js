@@ -14,58 +14,58 @@ class Queries {
             .from('view_counter')
             .select('*')
             .eq('name', 'Total');
-            if (error) {
-                console.error(`Erro ao buscar contador "Total": ${error.message}`);
-                return null;
-            }
-            return data;
+        if (error) {
+            console.error(`Erro ao buscar contador "Total": ${error.message}`);
+            return null;
+        }
+        return data;
     }
 
     async getResetMonthlyViews() {
         const { data, error } = await supabase
             .rpc('get_and_reset_monthly_views');
-            if (error) {
-                console.error(`Erro ao buscar/resetar contador "Mensal": ${error.message}`);
-                return null;
-            }
-            return data;
+        if (error) {
+            console.error(`Erro ao buscar/resetar contador "Mensal": ${error.message}`);
+            return null;
+        }
+        return data;
     }
 
     async getResetDailyViews() {
         const { data, error } = await supabase
             .rpc('get_and_reset_daily_views');
-            if (error) {
-                console.error(`Erro ao buscar/resetar contador "Diária": ${error.message}`);
-                return null;
-            }
-            return data;
+        if (error) {
+            console.error(`Erro ao buscar/resetar contador "Diária": ${error.message}`);
+            return null;
+        }
+        return data;
     }
 
     async incrementTotalViews() {
         const { data, error } = await supabase.rpc('increment_views', { counter_name: 'Total' });
-            if (error) {
-                console.error(`Erro ao incrementar contador "Total": ${error.message}`);
-                return null;
-            }
-            return data;
+        if (error) {
+            console.error(`Erro ao incrementar contador "Total": ${error.message}`);
+            return null;
+        }
+        return data;
     }
 
     async incrementMonthlyViews() {
         const { data, error } = await supabase.rpc('increment_views', { counter_name: 'Mensal' });
-            if (error) {
-                console.error(`Erro ao incrementar contador "Mensal": ${error.message}`);
-                return null;
-            }
-            return data;
+        if (error) {
+            console.error(`Erro ao incrementar contador "Mensal": ${error.message}`);
+            return null;
+        }
+        return data;
     }
 
     async incrementDailyViews() {
         const { data, error } = await supabase.rpc('increment_views', { counter_name: 'Diária' });
-            if (error) {
-                console.error(`Erro ao incrementar contador "Diária": ${error.message}`);
-                return null;
-            }
-            return data;
+        if (error) {
+            console.error(`Erro ao incrementar contador "Diária": ${error.message}`);
+            return null;
+        }
+        return data;
     }
 
     async getAuthenticationQuiz(token) {
@@ -75,11 +75,11 @@ class Queries {
             .eq('name', 'View Sessions Quiz')
             .eq('token', token)
 
-            if (error) {
-                console.error(`Erro ao buscar autenticação para visualizar dados de sessão do Quiz": ${error.message}`);
-                return null;
-            }
-            return data;
+        if (error) {
+            console.error(`Erro ao buscar autenticação para visualizar dados de sessão do Quiz": ${error.message}`);
+            return null;
+        }
+        return data;
     }
 
     async getActiveSessionsQuiz(ipAddress) {
@@ -89,11 +89,11 @@ class Queries {
             .eq("ip_address", ipAddress)
             .order("created_at", { ascending: true });
 
-            if (error) {
-                console.error(`Erro ao buscar sessões do Quiz de um IP específico": ${error.message}`);
-                return null;
-            }
-            return activeSessions;
+        if (error) {
+            console.error(`Erro ao buscar sessões do Quiz de um IP específico": ${error.message}`);
+            return null;
+        }
+        return activeSessions;
     }
 
     async getSessionBySessionID(sessionID) {
@@ -103,21 +103,21 @@ class Queries {
             .eq("session_id", sessionID)
             .maybeSingle();
 
-            if (error) {
-                console.error(`Erro ao buscar sessões do Quiz de um sessionID específico": ${error.message}`);
-                return null;
-            }
-            return session;
+        if (error) {
+            console.error(`Erro ao buscar sessões do Quiz de um sessionID específico": ${error.message}`);
+            return null;
+        }
+        return session;
     }
 
     async getAndDeleteOldSessionsQuiz() {
         const { data, error } = await supabase.rpc('get_and_delete_old_quiz_sessions');
 
-            if (error) {
-                console.error(`Erro ao buscar todas sessões do Quiz": ${error.message}`);
-                return null;
-            }
-            return data;
+        if (error) {
+            console.error(`Erro ao buscar todas sessões do Quiz": ${error.message}`);
+            return null;
+        }
+        return data;
     }
 
     async deleteSessionQuiz(sessionID) {
@@ -126,64 +126,86 @@ class Queries {
             .delete()
             .eq("session_id", sessionID);
 
-            if (error) {
-                console.error(`Erro ao deletar sessão do Quiz": ${error.message}`);
-                return null;
-            }
-            return data;
+        if (error) {
+            console.error(`Erro ao deletar sessão do Quiz": ${error.message}`);
+            return null;
+        }
+        return data;
     }
 
     async insertSessionQuiz(sessionID, ipAddress, questionSetID, expiresAt) {
-            const { error: insertError } = await supabase
-                .from("quiz_sessions")
-                .insert([{ session_id: sessionID, ip_address: ipAddress, question_set_id: questionSetID, expires_at: expiresAt }]);
+        const { error: insertError } = await supabase
+            .from("quiz_sessions")
+            .insert([{ session_id: sessionID, ip_address: ipAddress, question_set_id: questionSetID, expires_at: expiresAt }]);
 
-            if (insertError) {
-                console.error(`Erro ao inserir sessão do Quiz": ${insertError.message}`);
-                return null;
-            }
+        if (insertError) {
+            console.error(`Erro ao inserir sessão do Quiz": ${insertError.message}`);
+            return null;
+        }
     }
 
     async insertRankingQuiz(name, score, correctCount, ipAddress) {
-            const { error: insertError } = await supabase
-                .from("quiz_ranking")
-                .insert([
-                    {
-                        name: name,
-                        score: score,
-                        correct_count: correctCount,
-                        ip_address: ipAddress
-                    }
-                ]);
+        const { error: insertError } = await supabase
+            .from("quiz_ranking")
+            .insert([
+                {
+                    name: name,
+                    score: score,
+                    correct_count: correctCount,
+                    ip_address: ipAddress
+                }
+            ]);
 
-            if (insertError) {
-                console.error(`Erro ao inserir sessão do Quiz": ${insertError.message}`);
-                return null;
-            }
+        if (insertError) {
+            console.error(`Erro ao inserir sessão do Quiz": ${insertError.message}`);
+            return null;
+        }
     }
 
     async getQuizRanking() {
         const { data, error } = await supabase.rpc("get_and_reset_quiz_ranking");
 
-            if (error) {
-                console.error(`Erro ao buscar ranking do Quiz: ${error.message}`);
-                return null;
-            }
-            return data;
+        if (error) {
+            console.error(`Erro ao buscar ranking do Quiz: ${error.message}`);
+            return null;
+        }
+        return data;
     }
 
     async getTotalUsageNightscoutTester() {
         const { data, error } = await supabase
             .from('nightscout_tester_uses_general')
             .select('*');
-            if (error) {
-                console.error(`Erro ao buscar contador de usos do testador de Nightscout: ${error.message}`);
-                return null;
-            }
-            return data;
+        if (error) {
+            console.error(`Erro ao buscar contador de usos do testador de Nightscout: ${error.message}`);
+            return null;
+        }
+        return data;
     }
 
-    async 
+    async incrementNightscoutTesterUses(ipAddress) {
+        const { data, error } = await supabase.rpc('increment_ip_count_nightscout_tester');
+
+        if (error) {
+            console.error(`Erro ao incrementar uso (individual) do testador de Nightscout": ${error.message}`);
+            return null;
+        }
+        return data;
+    }
+
+    async incrementGeneralNightscoutTesterUses() {
+        const { data, error } = await supabase
+            .from('nightscout_tester_uses_general')
+            .update({ count: supabase.rpc('increment_counter') })
+            .eq('id', 1)
+            .select();
+
+        if (error) {
+            console.error(`Erro ao incrementar uso (geral) do testador de Nightscout: ${error.message}`);
+            return null;
+        }
+        return data;
+    }
 }
 
 module.exports = new Queries();
