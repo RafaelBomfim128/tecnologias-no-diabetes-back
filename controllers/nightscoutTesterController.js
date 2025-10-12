@@ -20,14 +20,21 @@ exports.incrementCounterUses = async (req, res) => {
             req.connection?.remoteAddress || 
             'unknown';
 
-        await Promise.allSettled([
+        const results = await Promise.allSettled([
             queries.incrementNightscoutTesterUses(ipAddress),
             queries.incrementGeneralNightscoutTesterUses()
-        ]).then(results => results.map(r => r.status === 'fulfilled' ? r.value : null));
+        ]);
+
+        const hasError = results.some(r => r.status === 'rejected');
+
+        if (hasError) {
+            console.error('❌ Erro em um ou mais incrementadores:', results);
+            return res.status(500).json({ message: 'Erro ao incrementar contador de usos do Nightscout tester' });
+        }
 
         res.status(200).json({ message: 'Nightscout Tester uses incremented successfully' });
     } catch (err) {
-        console.error("Erro ao incrementar contador de usos do testador de Nightscout:", err);
+        console.error("❌ Erro ao incrementar contador de usos do testador de Nightscout:", err);
         res.status(500).json({ message: "Failed to increment usage counter for Nightscout tester", error: err });
     }
 };

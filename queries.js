@@ -184,7 +184,7 @@ class Queries {
     }
 
     async incrementNightscoutTesterUses(ipAddress) {
-        const { data, error } = await supabase.rpc('increment_ip_count_nightscout_tester');
+        const { data, error } = await supabase.rpc('increment_ip_count_nightscout_tester', { ip: ipAddress });
 
         if (error) {
             console.error(`Erro ao incrementar uso (individual) do testador de Nightscout": ${error.message}`);
@@ -194,14 +194,10 @@ class Queries {
     }
 
     async incrementGeneralNightscoutTesterUses() {
-        const { data, error } = await supabase
-            .from('nightscout_tester_uses_general')
-            .update({ count: supabase.rpc('increment_counter') })
-            .eq('id', 1)
-            .select();
+        const { data, error } = await supabase.rpc('increment_nightscout_tester_uses_general', { ip: ipAddress });
 
         if (error) {
-            console.error(`Erro ao incrementar uso (geral) do testador de Nightscout: ${error.message}`);
+            console.error(`Erro ao incrementar uso (geral) do testador de Nightscout": ${error.message}`);
             return null;
         }
         return data;
