@@ -2,7 +2,8 @@ const supabase = require('./supabaseClient');
 
 class Queries {
     getColumnValue(data, column) {
-        return data[0][column]
+        if (!data || !data[0]) return null;
+        return data[0][column];
     }
 
     getColumnRows(data, column) {
