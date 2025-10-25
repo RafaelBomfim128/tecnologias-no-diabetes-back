@@ -8,7 +8,11 @@ exports.healthCheck = async (req, res) => {
 exports.getTotalViews = async (req, res) => {
     try {
         queries.getTotalViews().then(data => {
-            res.status(200).json({ counter: queries.getColumnValue(data, 'views') });
+            const count = queries.getColumnValue(data, 'views');
+            if (count === null) {
+                return res.status(500).json({ error: 'Failed to fetch Total count' });
+            }
+            res.status(200).json({ counter: count });
         });
     } catch (error) {
         console.error('Erro ao buscar contador "Total":', error.message);
@@ -19,7 +23,11 @@ exports.getTotalViews = async (req, res) => {
 exports.getResetMonthlyViews = async (req, res) => {
     try {
         queries.getResetMonthlyViews().then(data => {
-            res.status(200).json({ counter: queries.getColumnValue(data, 'views') });
+            const count = queries.getColumnValue(data, 'views');
+            if (count === null) {
+                return res.status(500).json({ error: 'Failed to fetch Monthly count' });
+            }
+            res.status(200).json({ counter: count });
         });
     } catch (error) {
         console.error('Erro ao buscar contador "Mensal":', error.message);
@@ -30,7 +38,11 @@ exports.getResetMonthlyViews = async (req, res) => {
 exports.getResetDailyViews = async (req, res) => {
     try {
         queries.getResetDailyViews().then(data => {
-            res.status(200).json({ counter: queries.getColumnValue(data, 'views') });
+            const count = queries.getColumnValue(data, 'views');
+            if (count === null) {
+                return res.status(500).json({ error: 'Failed to fetch Daily count' });
+            }
+            res.status(200).json({ counter: count });
         });
     } catch (error) {
         console.error('Erro ao buscar contador "Diária":', error.message);
