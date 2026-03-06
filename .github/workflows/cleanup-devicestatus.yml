@@ -2,18 +2,15 @@ name: Cleanup devicestatus (keep last 3)
 
 on:
   schedule:
-    - cron: '0 * * * *' 
+    - cron: '0 * * * *'
   workflow_dispatch:
 
 jobs:
   cleanup:
     runs-on: ubuntu-latest
 
-    env:
-      MONGODB_URI: ${{ secrets.MONGODB_URI }}
-
     steps:
-      - name: Setup Node 20
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -21,7 +18,7 @@ jobs:
       - name: Install MongoDB driver
         run: npm install mongodb@6 --no-save
 
-      - name: Run cleanup (keep last 3)
+      - name: Cleanup collection
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
         run: |
@@ -29,73 +26,32 @@ jobs:
           const { MongoClient } = require('mongodb');
 
           (async () => {
-            const uri = process.env.MONGODB_URI;
-            if (!uri) {
-              console.error('MONGODB_URI not set');
-              process.exit(1);
-            }
-
-            const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+            const client = new MongoClient(process.env.MONGODB_URI);
             await client.connect();
 
-            try {
-              const db = client.db(); // DB da URI (ex: /test) ou default
-              const coll = db.collection('devicestatus');
+            const db = client.db();
+            const coll = db.collection('devicestatus');
 
-              const total = await coll.countDocuments();
-              console.log('Total devicestatus documents:', total);
-              if (total <= 3) {
-                console.log('Nothing to delete (<= 3 docs). Exiting.');
-                process.exit(0);
-              }
+            const total = await coll.countDocuments();
+            console.log('Total documents:', total);
 
-              const third = await coll.find({}, { projection: { created_at: 1 } })
-                                     .sort({ created_at: -1, _id: -1 })
-                                     .skip(2)
-                                     .limit(1)
-                                     .next();
-
-              if (!third) {
-                console.log('Could not find 3rd document (unexpected). Exiting.');
-                process.exit(0);
-              }
-
-              // Build delete filter:
-              // delete documents with created_at < third.created_at
-              // OR (created_at == third.created_at AND _id < third._id) to ensure we keep exactly the top 3
-              const thresholdCreated = third.created_at;
-              let filter;
-              if (thresholdCreated !== undefined) {
-                filter = {
-                  $or: [
-                    { created_at: { $lt: thresholdCreated } },
-                    { created_at: thresholdCreated, _id: { $lt: third._id } }
-                  ]
-                };
-              } else {
-                console.log('created_at not present on 3rd doc; falling back to _id-based deletion');
-                // find the 3rd _id by _id desc
-                const thirdById = await coll.find({}, { projection: { _id: 1 } })
-                                            .sort({ _id: -1 })
-                                            .skip(2)
-                                            .limit(1)
-                                            .next();
-                if (!thirdById) {
-                  console.log('No 3rd doc by _id found. Exiting.');
-                  process.exit(0);
-                }
-                filter = { _id: { $lt: thirdById._id } }; // keep _id >= thirdById._id (top 3)
-              }
-
-              const res = await coll.deleteMany(filter);
-              console.log('Deleted documents:', res.deletedCount);
-
+            if (total <= 3) {
+              console.log('Nothing to delete');
               process.exit(0);
-            } catch (err) {
-              console.error('Error in cleanup:', err);
-              process.exit(1);
-            } finally {
-              try { await client.close(); } catch(e){}
             }
+
+            const third = await coll.find({})
+              .sort({ _id: -1 })
+              .skip(2)
+              .limit(1)
+              .next();
+
+            const res = await coll.deleteMany({
+              _id: { $lt: third._id }
+            });
+
+            console.log('Deleted:', res.deletedCount);
+
+            await client.close();
           })();
           NODE
