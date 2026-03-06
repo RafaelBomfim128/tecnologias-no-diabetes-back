@@ -2,7 +2,6 @@ name: Cleanup devicestatus (keep last 3)
 
 on:
   schedule:
-    # every 3 hours
     - cron: '0 */3 * * *'
   workflow_dispatch:
 
@@ -14,49 +13,50 @@ jobs:
       MONGODB_URI: ${{ secrets.MONGODB_URI }}
 
     steps:
-      - name: Checkout (not strictly needed but kept for consistency)
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js (required for npx)
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Cleanup devicestatus using mongosh (npx)
-        env:
-          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+      - name: Install mongodb driver
         run: |
-          # use npx -y to run mongosh without global install
-          npx -y mongosh "$MONGODB_URI" --quiet <<'MJS'
-          (async function() {
-            try {
-              const coll = db.getCollection('devicestatus');
+          npm init -y
+          npm install mongodb@6
 
-              const total = await coll.countDocuments();
-              print('Total devicestatus documents:', total);
+      - name: Create cleanup script
+        run: |
+          cat > cleanup-devicestatus.js <<'JS'
+          const { MongoClient } = require('mongodb');
 
-              if (total <= 3) {
-                print('Nothing to delete (<= 3 docs). Exiting.');
-                quit(0);
-              }
+          (async () => {
 
-              // get the 3 most recent by created_at (ISO string ordering)
-              const keepDocs = await coll.find({}, { projection: { _id: 1 } })
-                .sort({ created_at: -1 })
-                .limit(3)
-                .toArray();
+            const client = new MongoClient(process.env.MONGODB_URI);
+            await client.connect();
 
-              const keepIds = keepDocs.map(d => d._id);
-              print('Keeping IDs (most recent 3):', keepIds.map(i => i.toString()).join(', '));
+            const db = client.db();
+            const coll = db.collection('devicestatus');
 
-              // delete everything not in keepIds
-              const res = await coll.deleteMany({ _id: { $nin: keepIds } });
-              print('Deleted:', res.deletedCount);
+            const keepDocs = await coll
+              .find({}, { projection: { _id: 1 } })
+              .sort({ created_at: -1 })
+              .limit(3)
+              .toArray();
 
-              quit(0);
-            } catch (err) {
-              print('Error:', err);
-              quit(1);
-            }
+            const keepIds = keepDocs.map(d => d._id);
+
+            const result = await coll.deleteMany({
+              _id: { $nin: keepIds }
+            });
+
+            console.log("Deleted:", result.deletedCount);
+
+            await client.close();
+
           })();
-          MJS
+          JS
+
+      - name: Run cleanup script
+        run: node cleanup-devicestatus.js
