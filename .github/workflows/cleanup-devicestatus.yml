@@ -2,61 +2,38 @@ name: Cleanup devicestatus (keep last 3)
 
 on:
   schedule:
-    - cron: '0 */6 * * *'
+    - cron: '0 */3 * * *'   # a cada 3 horas
   workflow_dispatch:
 
 jobs:
   cleanup:
     runs-on: ubuntu-latest
 
-    env:
-      MONGODB_URI: ${{ secrets.MONGODB_URI }}
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install mongodb driver
+      - name: Install mongosh
         run: |
-          npm init -y
-          npm install mongodb@6
+          sudo apt-get update
+          sudo apt-get install -y mongodb-mongosh
 
-      - name: Create cleanup script
+      - name: Cleanup devicestatus
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
         run: |
-          cat > cleanup-devicestatus.js <<'JS'
-          const { MongoClient } = require('mongodb');
+          mongosh "$MONGODB_URI" --quiet --eval '
 
-          (async () => {
+          const coll = db.collection("devicestatus");
 
-            const client = new MongoClient(process.env.MONGODB_URI);
-            await client.connect();
+          const keep = coll
+            .find({}, { _id: 1 })
+            .sort({ created_at: -1 })
+            .limit(3)
+            .toArray()
+            .map(d => d._id);
 
-            const db = client.db();
-            const coll = db.collection('devicestatus');
+          const result = coll.deleteMany({
+            _id: { $nin: keep }
+          });
 
-            const keepDocs = await coll
-              .find({}, { projection: { _id: 1 } })
-              .sort({ created_at: -1 })
-              .limit(3)
-              .toArray();
+          print("Deleted:", result.deletedCount);
 
-            const keepIds = keepDocs.map(d => d._id);
-
-            const result = await coll.deleteMany({
-              _id: { $nin: keepIds }
-            });
-
-            console.log("Deleted:", result.deletedCount);
-
-            await client.close();
-
-          })();
-          JS
-
-      - name: Run cleanup script
-        run: node cleanup-devicestatus.js
+          '
