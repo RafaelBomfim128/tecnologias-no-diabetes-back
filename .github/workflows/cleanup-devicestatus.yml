@@ -1,0 +1,98 @@
+name: Cleanup devicestatus (keep last 3)
+
+on:
+  schedule:
+    # every 6 hours (at minute 0)
+    - cron: '0 */6 * * *'
+  workflow_dispatch: {} # permite disparo manual
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    env:
+      # obrigatoriamente configure esse secret no repo: Settings -> Secrets -> New repository secret
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install mongodb driver
+        run: |
+          npm init -y
+          npm install mongodb@4
+
+      - name: Create cleanup script
+        run: |
+          cat > cleanup-devicestatus.js <<'JS'
+          const { MongoClient } = require('mongodb');
+          const fs = require('fs');
+
+          (async () => {
+            const uri = process.env.MONGODB_URI;
+            if (!uri) {
+              console.error('MONGODB_URI not set (set as repository secret)');
+              process.exit(1);
+            }
+
+            const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
+            try {
+              await client.connect();
+              const db = client.db();
+              const coll = db.collection('devicestatus');
+
+              const total = await coll.countDocuments();
+              console.log('Total devicestatus documents:', total);
+
+              if (total <= 3) {
+                console.log('Total <= 3, nothing to delete. Exiting.');
+                process.exit(0);
+              }
+
+              const keepDocs = await coll.find({}, { projection: { _id: 1, created_at: 1 } })
+                                        .sort({ created_at: -1 })
+                                        .limit(3)
+                                        .toArray();
+
+              const keepIds = keepDocs.map(d => d._id);
+              console.log('Keeping IDs (most recent 3):', keepIds.map(id => id.toString()));
+
+              // backup
+              const toDeleteCursor = coll.find({ _id: { $nin: keepIds } });
+              const toDelete = await toDeleteCursor.toArray();
+              const ts = new Date().toISOString().replace(/[:.]/g, '-');
+              const backupFile = `devicestatus-backup-${ts}.json`;
+              fs.writeFileSync(backupFile, JSON.stringify(toDelete, null, 2));
+              console.log(`Backup written to ${backupFile} (documents: ${toDelete.length})`);
+
+              if (toDelete.length === 0) {
+                console.log('No documents to delete.');
+                process.exit(0);
+              }
+
+              const res = await coll.deleteMany({ _id: { $nin: keepIds } });
+              console.log('DeletedCount:', res.deletedCount);
+              console.log('Cleanup finished successfully.');
+
+            } catch (err) {
+              console.error('Error during cleanup:', err);
+              process.exit(1);
+            } finally {
+              await client.close();
+            }
+          })();
+          JS
+
+      - name: Run cleanup script
+        run: node cleanup-devicestatus.js
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: devicestatus-backup
+          path: devicestatus-backup-*.json
