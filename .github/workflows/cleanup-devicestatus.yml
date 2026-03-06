@@ -2,16 +2,16 @@ name: Cleanup devicestatus (keep last 3)
 
 on:
   schedule:
-    # every 6 hours (at minute 0)
-    - cron: '0 */6 * * *'
-  workflow_dispatch: {} # permite disparo manual
+    - cron: '0 */3 * * *'
+  workflow_dispatch:
 
 jobs:
   cleanup:
     runs-on: ubuntu-latest
+
     env:
-      # obrigatoriamente configure esse secret no repo: Settings -> Secrets -> New repository secret
       MONGODB_URI: ${{ secrets.MONGODB_URI }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
       - name: Install mongodb driver
         run: |
           npm init -y
-          npm install mongodb@4
+          npm install mongodb@6
 
       - name: Create cleanup script
         run: |
@@ -33,37 +33,30 @@ jobs:
 
           (async () => {
 
-          const client = new MongoClient(process.env.MONGODB_URI);
+            const client = new MongoClient(process.env.MONGODB_URI);
+            await client.connect();
 
-          await client.connect();
+            const db = client.db();
+            const coll = db.collection('devicestatus');
 
-          const db = client.db();
-          const coll = db.collection('devicestatus');
-
-          const keepDocs = await coll
+            const keepDocs = await coll
               .find({}, { projection: { _id: 1 } })
               .sort({ created_at: -1 })
               .limit(3)
               .toArray();
 
-          const keepIds = keepDocs.map(d => d._id);
+            const keepIds = keepDocs.map(d => d._id);
 
-          const result = await coll.deleteMany({
+            const result = await coll.deleteMany({
               _id: { $nin: keepIds }
-          });
+            });
 
-          console.log("Deleted:", result.deletedCount);
+            console.log("Deleted:", result.deletedCount);
 
-          await client.close();
+            await client.close();
 
           })();
           JS
 
       - name: Run cleanup script
         run: node cleanup-devicestatus.js
-
-      - name: Upload backup artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: devicestatus-backup
-          path: devicestatus-backup-*.json
