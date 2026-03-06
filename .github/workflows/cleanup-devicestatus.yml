@@ -2,38 +2,61 @@ name: Cleanup devicestatus (keep last 3)
 
 on:
   schedule:
-    - cron: '0 */3 * * *'   # a cada 3 horas
+    # every 3 hours
+    - cron: '0 */3 * * *'
   workflow_dispatch:
 
 jobs:
   cleanup:
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Install mongosh
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y mongodb-mongosh
+    env:
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
 
-      - name: Cleanup devicestatus
+    steps:
+      - name: Checkout (not strictly needed but kept for consistency)
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (required for npx)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Cleanup devicestatus using mongosh (npx)
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
         run: |
-          mongosh "$MONGODB_URI" --quiet --eval '
+          # use npx -y to run mongosh without global install
+          npx -y mongosh "$MONGODB_URI" --quiet <<'MJS'
+          (async function() {
+            try {
+              const coll = db.getCollection('devicestatus');
 
-          const coll = db.collection("devicestatus");
+              const total = await coll.countDocuments();
+              print('Total devicestatus documents:', total);
 
-          const keep = coll
-            .find({}, { _id: 1 })
-            .sort({ created_at: -1 })
-            .limit(3)
-            .toArray()
-            .map(d => d._id);
+              if (total <= 3) {
+                print('Nothing to delete (<= 3 docs). Exiting.');
+                quit(0);
+              }
 
-          const result = coll.deleteMany({
-            _id: { $nin: keep }
-          });
+              // get the 3 most recent by created_at (ISO string ordering)
+              const keepDocs = await coll.find({}, { projection: { _id: 1 } })
+                .sort({ created_at: -1 })
+                .limit(3)
+                .toArray();
 
-          print("Deleted:", result.deletedCount);
+              const keepIds = keepDocs.map(d => d._id);
+              print('Keeping IDs (most recent 3):', keepIds.map(i => i.toString()).join(', '));
 
-          '
+              // delete everything not in keepIds
+              const res = await coll.deleteMany({ _id: { $nin: keepIds } });
+              print('Deleted:', res.deletedCount);
+
+              quit(0);
+            } catch (err) {
+              print('Error:', err);
+              quit(1);
+            }
+          })();
+          MJS
