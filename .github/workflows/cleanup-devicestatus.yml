@@ -19,7 +19,7 @@ jobs:
           node-version: '20'
 
       - name: Install MongoDB driver
-        run: npm install mongodb@6
+        run: npm install mongodb@6 --no-save
 
       - name: Run cleanup (keep last 3)
         env:
