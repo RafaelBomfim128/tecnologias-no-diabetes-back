@@ -87,6 +87,7 @@ const incrementViewCounterLimiter = rateLimit({
     },
 });
 
+// Rate Limiting para increment de usos do Nightscout Tester e Viewer
 const incrementNightscoutUsesLimiter = rateLimit({
     windowMs: 10 * 1000, // 10 segundos
     max: 1, // 1 requisição por IP
@@ -97,6 +98,7 @@ const incrementNightscoutUsesLimiter = rateLimit({
     },
 });
 
+//Health check
 app.get('/', viewsController.healthCheck);
 app.get('/healthcheck', viewsController.healthCheck);
 
@@ -118,6 +120,10 @@ app.get('/api/proxy', proxyController.getContentHtml);
 //APIs do testador de Nightscout
 app.get('/api/nightscoutUses', nightscoutTesterController.getTotalUses);
 app.post('/api/incrementNightcoutUses', incrementNightscoutUsesLimiter, nightscoutTesterController.incrementCounterUses);
+
+//APIs do visualizador de Nightscout
+app.get('/api/nightscoutViewerUses', viewsController.getTotalUsesNightscoutViewer);
+app.post('/api/incrementNightscoutViewerUses', incrementNightscoutUsesLimiter, viewsController.incrementCounterUsesNightscoutViewer);
 
 // Tratamento de erros
 app.use((err, req, res, next) => {
