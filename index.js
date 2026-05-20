@@ -6,6 +6,7 @@ const viewsController = require('./controllers/viewsController');
 const quizController = require('./controllers/quizController');
 const proxyController = require('./controllers/proxyController')
 const nightscoutTesterController = require('./controllers/nightscoutTesterController')
+const nightscoutViewerController = require('./controllers/nightscoutViewerController');
 
 dotenv.config();
 const app = express();
@@ -122,8 +123,8 @@ app.get('/api/nightscoutTesterUses', nightscoutTesterController.getTotalUses);
 app.post('/api/incrementNightcoutTesterUses', incrementNightscoutUsesLimiter, nightscoutTesterController.incrementCounterUses);
 
 //APIs do visualizador de Nightscout
-app.get('/api/nightscoutViewerUses', viewsController.getTotalUsesNightscoutViewer);
-app.post('/api/incrementNightscoutViewerUses', incrementNightscoutUsesLimiter, viewsController.incrementCounterUsesNightscoutViewer);
+app.get('/api/nightscoutViewerUses', nightscoutViewerController.getTotalUses);
+app.post('/api/incrementNightscoutViewerUses', incrementNightscoutUsesLimiter, nightscoutViewerController.incrementCounterUses);
 
 // Tratamento de erros
 app.use((err, req, res, next) => {
