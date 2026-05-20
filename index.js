@@ -120,7 +120,7 @@ app.get('/api/proxy', proxyController.getContentHtml);
 
 //APIs do testador de Nightscout
 app.get('/api/nightscoutTesterUses', nightscoutTesterController.getTotalUses);
-app.post('/api/incrementNightcoutTesterUses', incrementNightscoutUsesLimiter, nightscoutTesterController.incrementCounterUses);
+app.post('/api/incrementNightscoutTesterUses', incrementNightscoutUsesLimiter, nightscoutTesterController.incrementCounterUses);
 
 //APIs do visualizador de Nightscout
 app.get('/api/nightscoutViewerUses', nightscoutViewerController.getTotalUses);
