@@ -118,8 +118,8 @@ app.get('/api/quiz/ranking', quizController.getQuizRanking);
 app.get('/api/proxy', proxyController.getContentHtml);
 
 //APIs do testador de Nightscout
-app.get('/api/nightscoutUses', nightscoutTesterController.getTotalUses);
-app.post('/api/incrementNightcoutUses', incrementNightscoutUsesLimiter, nightscoutTesterController.incrementCounterUses);
+app.get('/api/nightscoutTesterUses', nightscoutTesterController.getTotalUses);
+app.post('/api/incrementNightcoutTesterUses', incrementNightscoutUsesLimiter, nightscoutTesterController.incrementCounterUses);
 
 //APIs do visualizador de Nightscout
 app.get('/api/nightscoutViewerUses', viewsController.getTotalUsesNightscoutViewer);
