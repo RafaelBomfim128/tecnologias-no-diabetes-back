@@ -6,6 +6,7 @@ const viewsController = require('./controllers/viewsController');
 const quizController = require('./controllers/quizController');
 const proxyController = require('./controllers/proxyController')
 const nightscoutTesterController = require('./controllers/nightscoutTesterController')
+const nightscoutViewerController = require('./controllers/nightscoutViewerController');
 
 dotenv.config();
 const app = express();
@@ -87,6 +88,7 @@ const incrementViewCounterLimiter = rateLimit({
     },
 });
 
+// Rate Limiting para increment de usos do Nightscout Tester e Viewer
 const incrementNightscoutUsesLimiter = rateLimit({
     windowMs: 10 * 1000, // 10 segundos
     max: 1, // 1 requisição por IP
@@ -97,6 +99,7 @@ const incrementNightscoutUsesLimiter = rateLimit({
     },
 });
 
+//Health check
 app.get('/', viewsController.healthCheck);
 app.get('/healthcheck', viewsController.healthCheck);
 
@@ -116,8 +119,12 @@ app.get('/api/quiz/ranking', quizController.getQuizRanking);
 app.get('/api/proxy', proxyController.getContentHtml);
 
 //APIs do testador de Nightscout
-app.get('/api/nightscoutUses', nightscoutTesterController.getTotalUses);
-app.post('/api/incrementNightcoutUses', incrementNightscoutUsesLimiter, nightscoutTesterController.incrementCounterUses);
+app.get('/api/nightscoutTesterUses', nightscoutTesterController.getTotalUses);
+app.post('/api/incrementNightscoutTesterUses', incrementNightscoutUsesLimiter, nightscoutTesterController.incrementCounterUses);
+
+//APIs do visualizador de Nightscout
+app.get('/api/nightscoutViewerUses', nightscoutViewerController.getTotalUses);
+app.post('/api/incrementNightscoutViewerUses', incrementNightscoutUsesLimiter, nightscoutViewerController.incrementCounterUses);
 
 // Tratamento de erros
 app.use((err, req, res, next) => {

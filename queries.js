@@ -203,6 +203,37 @@ class Queries {
         }
         return data;
     }
+
+    async getTotalUsageNightscoutViewer() {
+        const { data, error } = await supabase
+            .from('nightscout_viewer_uses_general')
+            .select('*');
+        if (error) {
+            console.error(`Erro ao buscar contador de usos do visualizador de Nightscout: ${error.message}`);
+            return null;
+        }
+        return data;
+    }
+
+    async incrementNightscoutViewerUses(ipAddress) {
+        const { data, error } = await supabase.rpc('increment_ip_count_nightscout_viewer', { ip: ipAddress });
+
+        if (error) {
+            console.error(`Erro ao incrementar uso (individual) do visualizador de Nightscout": ${error.message}`);
+            return null;
+        }
+        return data;
+    }
+
+    async incrementGeneralNightscoutViewerUses() {
+        const { data, error } = await supabase.rpc('increment_nightscout_viewer_uses_general');
+
+        if (error) {
+            console.error(`Erro ao incrementar uso (geral) do visualizador de Nightscout": ${error.message}`);
+            return null;
+        }
+        return data;
+    }
 }
 
 module.exports = new Queries();
